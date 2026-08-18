@@ -3,7 +3,7 @@ name = "tartarus-linux"
 version = "0.5.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
-description = "Linux analog driver for Razer Tartarus Pro — keys, axes, curves, layers"
+description = "Linux analog driver for Razer Tartarus Pro — keys, axes, curves, dual-bind, local web UI"
 repository = "https://github.com/ZidoDasZibro/tartarus-linux"
 readme = "README.md"
 
