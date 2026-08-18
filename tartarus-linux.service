@@ -1,0 +1,13 @@
+[Unit]
+Description=Tartarus Pro analog driver (Linux)
+After=graphical-session.target default.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/tartarus-linux
+Restart=on-failure
+RestartSec=3
+Environment=TARTARUS_CONFIG=%h/.config/tartarus-linux/config.toml
+
+[Install]
+WantedBy=default.target

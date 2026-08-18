@@ -1,0 +1,4 @@
+# Tartarus Pro + uinput for tartarus-linux
+KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1532", ATTRS{idProduct}=="0244", MODE="0660", GROUP="input"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1532", ATTRS{idProduct}=="0244", MODE="0664", GROUP="input"
