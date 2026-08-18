@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+BIN="${TARTARUS_BIN:-$HOME/.local/bin/tartarus-linux}"
+if pgrep -x tartarus-linux >/dev/null 2>&1; then
+  echo "already running (pid $(pgrep -x tartarus-linux))"
+  exit 0
+fi
+if [[ ! -x "$BIN" ]]; then
+  echo "not installed: $BIN"
+  exit 1
+fi
+if systemctl --user cat tartarus-linux.service >/dev/null 2>&1; then
+  systemctl --user start tartarus-linux.service
+  echo "started via systemd --user"
+else
+  nohup "$BIN" >/tmp/tartarus-linux.log 2>&1 &
+  echo "started pid $!  log /tmp/tartarus-linux.log"
+fi

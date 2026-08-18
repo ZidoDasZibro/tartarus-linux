@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Tartarus Linux Driver
+Comment=Start Razer Tartarus Pro analog driver
+Exec=tartarus-linux-start
+Icon=input-gaming
+Terminal=false
+Categories=Utility;System;HardwareSettings;
+Keywords=razer;tartarus;gamepad;analog;

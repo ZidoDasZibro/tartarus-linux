@@ -1,0 +1,26 @@
+#!/bin/bash
+# Ensure driver is running, then open config UI in the default browser.
+set -e
+BIN="${TARTARUS_BIN:-$HOME/.local/bin/tartarus-linux}"
+URL="http://127.0.0.1:8787/"
+
+if ! pgrep -x tartarus-linux >/dev/null 2>&1; then
+  if [[ -x "$BIN" ]]; then
+    nohup "$BIN" >/tmp/tartarus-linux.log 2>&1 &
+    for i in $(seq 1 30); do
+      if curl -sf "$URL" >/dev/null 2>&1; then break; fi
+      sleep 0.2
+    done
+  else
+    notify-send "Tartarus Linux" "Binary not found: $BIN — run INSTALL.sh first" 2>/dev/null || true
+    exit 1
+  fi
+fi
+
+if command -v xdg-open >/dev/null; then
+  xdg-open "$URL" >/dev/null 2>&1 &
+elif command -v gio >/dev/null; then
+  gio open "$URL" >/dev/null 2>&1 &
+else
+  echo "Open $URL in your browser"
+fi
