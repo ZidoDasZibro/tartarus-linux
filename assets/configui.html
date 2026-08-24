@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tartarus Pro Key Remap Settings</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f5f7;
+    --panel: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --border: #d8d8dc;
+    --accent: #0071e3;
+    --accent-text: #ffffff;
+    --ok: #1e8e3e;
+    --err: #d93025;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e;
+      --panel: #2c2c2e;
+      --text: #f5f5f7;
+      --muted: #9a9aa0;
+      --border: #48484a;
+      --accent: #409cff;
+      --accent-text: #0b0b0c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1.5rem 4rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Yu Gothic UI", system-ui, sans-serif;
+    line-height: 1.5;
+  }
+  .titlebar { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .title-group { display: flex; align-items: baseline; gap: 0.5rem; }
+  h1 { font-size: 1.4rem; margin: 0 0 0.25rem; }
+  .version-tag { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .sub { color: var(--muted); margin: 0 0 1.5rem; font-size: 0.9rem; }
+  #language-select {
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+  }
+  .panel h2 { font-size: 1.05rem; margin: 0 0 1rem; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 0.35rem 0.5rem; font-size: 0.92rem; }
+  th { color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+  tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
+  td:first-child { color: var(--muted); width: 4.5rem; font-variant-numeric: tabular-nums; }
+  select {
+    width: 100%;
+    padding: 0.3rem 0.4rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.92rem;
+  }
+  .key-picker {
+    display: flex;
+    gap: 0.3rem;
+  }
+  .key-picker .key-cat {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 6.5rem;
+  }
+  .key-picker .key-val {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  th.layer-col-unreachable,
+  td.layer-col-unreachable {
+    opacity: 0.4;
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--border) 0,
+      var(--border) 1px,
+      transparent 1px,
+      transparent 7px
+    );
+  }
+  .grid4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+  }
+  .field label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.3rem; }
+  input[type="number"] {
+    width: 100%;
+    padding: 0.3rem 0.4rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.92rem;
+  }
+  .hint { color: var(--muted); font-size: 0.85rem; margin: 0.75rem 0 0; }
+  .calib-row { display: flex; align-items: center; gap: 0.75rem; margin: 1rem 0; }
+  .calib-row button { padding: 0.4rem 1rem; font-size: 0.85rem; }
+  td input[type="number"] { width: 4.5rem; }
+  td input[type="checkbox"] { width: 1.1rem; height: 1.1rem; }
+  .depth-bar-wrap {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    width: 90px;
+    height: 0.85rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-right: 0.4rem;
+  }
+  .depth-bar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: var(--accent);
+  }
+  .actions {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+    padding: 1rem 0;
+  }
+  button {
+    appearance: none;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.6rem 1.4rem;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #status { font-size: 0.9rem; }
+  #status.ok { color: var(--ok); }
+  #status.err { color: var(--err); }
+</style>
+</head>
+<body>
+  <div class="titlebar">
+    <div class="title-group">
+      <h1 data-i18n="pageTitle">Tartarus Pro Key Remap Settings</h1>
+      <span id="version-tag" class="version-tag"></span>
+    </div>
+    <select id="language-select">
+      <option value="en">English</option>
+      <option value="ja">日本語</option>
+    </select>
+  </div>
+  <p class="sub" data-i18n-html="subtitleHtml">
+    Saving overwrites <code>config.toml</code>. If <code>tartarus_driver</code> is already running, it
+    picks up the change automatically within about a second — no restart needed (this page itself never
+    reads keystrokes).
+  </p>
+
+  <div class="panel">
+    <h2 data-i18n="panelHypershift">Hyper Shift</h2>
+    <div class="grid4">
+      <div class="field">
+        <label data-i18n="labelHypershiftMode">Mode</label>
+        <select id="hypershift-mode">
+          <option value="layer_switch" data-i18n="optModeLayerSwitch">Layout Switch</option>
+          <option value="modifier_key" data-i18n="optModeModifierKey">Modifier Key</option>
+        </select>
+      </div>
+      <div class="field" id="hypershift-switch-style-field">
+        <label data-i18n="labelHypershiftSwitchStyle">Switch Style</label>
+        <select id="hypershift-switch-style">
+          <option value="momentary" data-i18n="optStyleMomentary">Momentary (hold)</option>
+          <option value="toggle" data-i18n="optStyleToggle">Toggle (press to cycle)</option>
+        </select>
+      </div>
+      <div class="field" id="hypershift-layer-count-field">
+        <label data-i18n="labelHypershiftLayerCount">Layers</label>
+        <select id="hypershift-layer-count">
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </div>
+      <div class="field" id="hypershift-modifier-key-field">
+        <label data-i18n="labelHypershiftModifierKey">Modifier Key</label>
+        <div id="slot-hypershift-modifier-key"></div>
+      </div>
+    </div>
+    <p class="hint" data-i18n-html="hintHypershiftHtml"></p>
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="panelAnalog">Analog Keys (20 keys)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="thKey">Key</th>
+          <th data-i18n="thDefaultLayer">Default Layer</th>
+          <th data-i18n="thLayer1" data-layer="1">Layer1</th>
+          <th data-i18n="thLayer2" data-layer="2">Layer2</th>
+        </tr>
+      </thead>
+      <tbody id="analog-body"></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="panelSensitivity">Sensitivity (Actuation Point)</h2>
+    <div class="grid4">
+      <div class="field">
+        <label data-i18n="labelTOn">Default t_on (press threshold, deeper)</label>
+        <input type="number" id="t-on" min="1" max="255">
+      </div>
+      <div class="field">
+        <label data-i18n="labelTOff">Default t_off (release threshold, shallower)</label>
+        <input type="number" id="t-off" min="0" max="254">
+      </div>
+    </div>
+    <p class="hint" data-i18n-html="hintSensitivityHtml"></p>
+
+    <div class="calib-row">
+      <button id="calib-toggle-btn" type="button" data-i18n="btnCalibStart">Start Calibration</button>
+      <span id="calib-status" class="hint" style="margin:0;"></span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="thKey">Key</th>
+          <th data-i18n="thCurrent">Current</th>
+          <th data-i18n="thObservedMax">Observed Max</th>
+          <th data-i18n="thOverride">Override</th>
+          <th data-i18n="thTOn">t_on</th>
+          <th data-i18n="thTOff">t_off</th>
+        </tr>
+      </thead>
+      <tbody id="perkey-body"></tbody>
+    </table>
+    <p class="hint" data-i18n-html="hintCalibrationHtml"></p>
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="panelDpad">D-pad</h2>
+    <div class="grid4">
+      <div class="field"><label data-i18n="labelLeft">Left</label><div id="slot-dpad-left"></div></div>
+      <div class="field"><label data-i18n="labelUp">Up</label><div id="slot-dpad-up"></div></div>
+      <div class="field"><label data-i18n="labelRight">Right</label><div id="slot-dpad-right"></div></div>
+      <div class="field"><label data-i18n="labelDown">Down</label><div id="slot-dpad-down"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="panelWheel">Wheel / Middle Click</h2>
+    <div class="grid4">
+      <div class="field"><label data-i18n="labelWheelUp">Wheel Up</label><div id="slot-wheel-up"></div></div>
+      <div class="field"><label data-i18n="labelWheelDown">Wheel Down</label><div id="slot-wheel-down"></div></div>
+      <div class="field"><label data-i18n="labelMiddleClick">Middle Click</label><div id="slot-middle-click"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="panelLighting">Lighting (LED)</h2>
+    <div class="grid4">
+      <div class="field">
+        <label data-i18n="labelEffect">Effect</label>
+        <select id="lighting-effect">
+          <option value="none" data-i18n="optEffectNone">Don't change</option>
+          <option value="off" data-i18n="optEffectOff">Off</option>
+          <option value="static" data-i18n="optEffectStatic">Static</option>
+          <option value="breathing" data-i18n="optEffectBreathing">Breathing</option>
+          <option value="spectrum" data-i18n="optEffectSpectrum">Spectrum</option>
+          <option value="wave" data-i18n="optEffectWave">Wave</option>
+          <option value="reactive" data-i18n="optEffectReactive">Reactive</option>
+        </select>
+      </div>
+      <div class="field" id="lighting-color-field">
+        <label data-i18n="labelColor">Color</label>
+        <input type="color" id="lighting-color">
+      </div>
+      <div class="field" id="lighting-brightness-field">
+        <label data-i18n="labelBrightness">Brightness (0-255)</label>
+        <input type="number" id="lighting-brightness" min="0" max="255">
+      </div>
+      <div class="field" id="lighting-direction-field">
+        <label data-i18n="labelDirection">Direction</label>
+        <select id="lighting-direction">
+          <option value="left" data-i18n="optDirLeft">Left</option>
+          <option value="right" data-i18n="optDirRight">Right</option>
+        </select>
+      </div>
+      <div class="field" id="lighting-speed-field">
+        <label data-i18n="labelSpeed">Speed (1-4)</label>
+        <input type="number" id="lighting-speed" min="1" max="4">
+      </div>
+    </div>
+    <p class="hint" data-i18n-html="hintLightingHtml"></p>
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="panelLayerIndicator">Layer Indicator</h2>
+    <div class="grid4">
+      <div class="field">
+        <label>
+          <input type="checkbox" id="layer-indicator-enabled" style="width:auto;margin-right:0.4rem;">
+          <span data-i18n="labelLayerIndicatorEnable">Enable</span>
+        </label>
+      </div>
+      <div class="field" id="layer-indicator-color-field">
+        <label data-i18n="labelColor">Color</label>
+        <select id="layer-indicator-color">
+          <option value="red" data-i18n="optColorRed">Red</option>
+          <option value="green" data-i18n="optColorGreen">Green</option>
+          <option value="blue" data-i18n="optColorBlue">Blue</option>
+        </select>
+      </div>
+    </div>
+    <p class="hint" data-i18n-html="hintLayerIndicatorHtml"></p>
+  </div>
+
+  <div class="actions">
+    <button id="save-btn" data-i18n="btnSave">Save</button>
+    <span id="status"></span>
+  </div>
+
+<script>
+const I18N = {
+  en: {
+    pageTitle: "Tartarus Pro Key Remap Settings",
+    subtitleHtml: 'Saving overwrites <code>config.toml</code>. If <code>tartarus_driver</code> is already running, it picks up the change automatically within about a second — no restart needed (this page itself never reads keystrokes).',
+    panelAnalog: "Analog Keys (20 keys)",
+    thKey: "Key",
+    thDefaultLayer: "Default Layer",
+    thLayer1: "Layer1",
+    thLayer2: "Layer2",
+    catBasic: "Basic",
+    catMedia: "Media Control",
+    panelHypershift: "Hyper Shift",
+    labelHypershiftMode: "Mode",
+    optModeLayerSwitch: "Layout Switch",
+    optModeModifierKey: "Modifier Key",
+    labelHypershiftSwitchStyle: "Switch Style",
+    optStyleMomentary: "Momentary (hold)",
+    optStyleToggle: "Toggle (press to cycle)",
+    labelHypershiftLayerCount: "Layers",
+    labelHypershiftModifierKey: "Modifier Key",
+    hintHypershiftHtml: 'Controls what the physical "Hyper Response" thumb button does. <b>Layout Switch</b> uses it to switch which of the Analog Keys table\'s columns below is active: <b>Momentary</b> (default) behaves as before — held selects Layer1, released returns to Default. <b>Toggle</b> instead advances one layer every press (Default → Layer1 → Layer2 → Default… for 3 layers, or Default ↔ Layer1 for 2), and ignores release. <b>Modifier Key</b> disables layer switching entirely and just sends the chosen key (default Alt) on press/release, like any other key. Layer columns that aren\'t currently reachable are shown hatched below. The "Layer Indicator" panel further down reflects the active layer only in Layout Switch mode.',
+    panelSensitivity: "Sensitivity (Actuation Point)",
+    labelTOn: "Default t_on (press threshold, deeper)",
+    labelTOff: "Default t_off (release threshold, shallower)",
+    hintSensitivityHtml: 'Key press depth is a raw value from 0 (not pressed) to 255 (fully pressed). A key registers as pressed once its depth exceeds t_on, and released once it drops below t_off (hysteresis). t_off must be smaller than t_on. Lower values make a key trigger with a lighter touch. Keys without an override use this default. Has no effect on response speed (only the threshold changes).',
+    btnCalibStart: "Start Calibration",
+    btnCalibStop: "Stop Calibration",
+    thCurrent: "Current",
+    thObservedMax: "Observed Max",
+    thOverride: "Override",
+    thTOn: "t_on",
+    thTOff: "t_off",
+    hintCalibrationHtml: 'Click "Start Calibration", then actually press keys — "Current" updates live, and "Observed Max" keeps the deepest value seen so far (recorded only while this page is open, never saved). Use these to decide each key\'s t_on/t_off. Only keys with "Override" checked use their own t_on/t_off instead of the default.',
+    panelDpad: "D-pad",
+    labelLeft: "Left",
+    labelUp: "Up",
+    labelRight: "Right",
+    labelDown: "Down",
+    panelWheel: "Wheel / Middle Click",
+    labelWheelUp: "Wheel Up",
+    labelWheelDown: "Wheel Down",
+    labelMiddleClick: "Middle Click",
+    panelLighting: "Lighting (LED)",
+    labelEffect: "Effect",
+    optEffectNone: "Don't change",
+    optEffectOff: "Off",
+    optEffectStatic: "Static",
+    optEffectBreathing: "Breathing",
+    optEffectSpectrum: "Spectrum",
+    optEffectWave: "Wave",
+    optEffectReactive: "Reactive",
+    labelColor: "Color",
+    labelBrightness: "Brightness (0-255)",
+    labelDirection: "Direction",
+    optDirLeft: "Left",
+    optDirRight: "Right",
+    labelSpeed: "Speed (1-4)",
+    hintLightingHtml: 'Choosing "Don\'t change" leaves <code>config.toml</code>\'s <code>[lighting]</code> at <code>effect = "none"</code> (i.e. the device\'s current lighting state is left alone). Any other choice sends that lighting command every time the driver starts. Not individually verified on real hardware for every effect (research-based, see <code>tasks/research/</code>). If it doesn\'t light up as expected, check <code>tasks/run.log</code>.',
+    panelLayerIndicator: "Layer Indicator",
+    labelLayerIndicatorEnable: "Enable",
+    optColorRed: "Red",
+    optColorGreen: "Green",
+    optColorBlue: "Blue",
+    hintLayerIndicatorHtml: 'When enabled, the side indicator LED lights up whenever a non-Default layer (Layer1/Layer2) is active — in the "Hyper Shift" panel above, this means Momentary while held, or Toggle whenever it has cycled away from Default — and turns off on Default. Not used at all in Modifier Key mode (the layer never changes). This is a separate LED (one of the 3 side LEDs) from the main key lighting panel above, so it doesn\'t interfere with effects like Spectrum. OpenRazer itself doesn\'t implement this for the Tartarus Pro either, so it\'s unverified on real hardware (research-based, see <code>tasks/research/2026-07-21_tartarus_pro_profile_indicator_led_protocol.md</code>). If it doesn\'t light up, check <code>tasks/run.log</code> for <code>WARNING: failed to send layer indicator ...</code>.',
+    btnSave: "Save",
+    statusSaving: "Saving...",
+    statusSaved: "Saved. Applies automatically within ~1s if tartarus_driver is running.",
+    statusErrorPrefix: "Error: ",
+    statusNetworkErrorPrefix: "Network error: ",
+    calibPromptPressKeys: "Try pressing keys...",
+    calibTimeoutMsg: "(auto-stopped due to timeout)",
+    unknownKeySuffix: "(unknown key)",
+  },
+  ja: {
+    pageTitle: "Tartarus Pro キーリマップ設定",
+    subtitleHtml: '保存すると <code>config.toml</code> を上書きします。<code>tartarus_driver</code> が既に動いていれば、約1秒以内に自動的に反映されます(再起動不要。このページ自体はキー入力を監視しません)。',
+    panelAnalog: "アナログキー (20キー)",
+    thKey: "キー",
+    thDefaultLayer: "通常レイヤー",
+    thLayer1: "Layer1",
+    thLayer2: "Layer2",
+    catBasic: "基本",
+    catMedia: "メディア操作",
+    panelHypershift: "ハイパーシフト",
+    labelHypershiftMode: "モード",
+    optModeLayerSwitch: "レイアウト切替",
+    optModeModifierKey: "修飾キー",
+    labelHypershiftSwitchStyle: "切替方式",
+    optStyleMomentary: "モーメンタリ(押している間)",
+    optStyleToggle: "トグル(押すたびに切替)",
+    labelHypershiftLayerCount: "レイヤー数",
+    labelHypershiftModifierKey: "修飾キー",
+    hintHypershiftHtml: '物理的な「Hyper Response」親指ボタンの動作を設定する。<b>レイアウト切替</b>を選ぶと、下の「アナログキー」表のどの列が有効になるかをこのボタンで切り替える: <b>モーメンタリ</b>(既定)は従来どおり — 押している間はLayer1、離すと通常レイヤーに戻る。<b>トグル</b>は押すたびに1レイヤーずつ進む(3レイヤーなら 通常→Layer1→Layer2→通常…、2レイヤーなら 通常⇔Layer1)。離す動作は無視される。<b>修飾キー</b>を選ぶとレイアウト切替は一切行わず、選択したキー(既定はAlt)を押下/解放時にそのまま送信する、通常のキーと同じ動作になる。現在の設定では到達できないレイヤー列は下でハッチング表示される。さらに下の「レイヤーインジケータ」パネルは、レイアウト切替モードの時のみ現在のレイヤーを反映する。',
+    panelSensitivity: "感度 (アクチュエーションポイント)",
+    labelTOn: "既定値 t_on (押下判定・深く)",
+    labelTOff: "既定値 t_off (解放判定・浅く)",
+    hintSensitivityHtml: 'キーの押し込み深さは0(未押下)〜255(最深)の生値。深さがt_onを超えたら押下、t_off未満に戻ったら解放と判定する(ヒステリシス)。t_offはt_onより小さい値にすること。値を小さくするほど軽く触れただけで反応するようになる。個別設定していないキーはこの既定値が使われる。反応速度への影響はない(判定しきい値が変わるだけ)。',
+    btnCalibStart: "キャリブレーション開始",
+    btnCalibStop: "キャリブレーション停止",
+    thCurrent: "現在値",
+    thObservedMax: "観測最大",
+    thOverride: "個別設定",
+    thTOn: "t_on",
+    thTOff: "t_off",
+    hintCalibrationHtml: '「キャリブレーション開始」を押してから実際にキーを押し込むと、「現在値」がリアルタイムに動き、「観測最大」にはこれまでで一番深く押し込んだ値が残る(このページを開いている間のみ記録、保存はされない)。これを参考に各キーのt_on/t_offを決められる。「個別設定」にチェックを入れたキーだけ、既定値の代わりにそのキー専用のt_on/t_offが使われる。',
+    panelDpad: "十字キー (D-pad)",
+    labelLeft: "左",
+    labelUp: "上",
+    labelRight: "右",
+    labelDown: "下",
+    panelWheel: "ホイール / 中クリック",
+    labelWheelUp: "ホイール上",
+    labelWheelDown: "ホイール下",
+    labelMiddleClick: "中クリック",
+    panelLighting: "ライティング (LED)",
+    labelEffect: "エフェクト",
+    optEffectNone: "変更しない",
+    optEffectOff: "消灯",
+    optEffectStatic: "単色",
+    optEffectBreathing: "呼吸(単色)",
+    optEffectSpectrum: "スペクトラム",
+    optEffectWave: "ウェーブ",
+    optEffectReactive: "リアクティブ",
+    labelColor: "色",
+    labelBrightness: "明るさ (0-255)",
+    labelDirection: "方向",
+    optDirLeft: "左",
+    optDirRight: "右",
+    labelSpeed: "速度 (1-4)",
+    hintLightingHtml: '「変更しない」を選ぶと <code>config.toml</code> の <code>[lighting]</code> は <code>effect = "none"</code> のまま(=デバイス側の現在のライティング状態を変更しない)。それ以外を選ぶと、ドライバ起動時に毎回そのライティングコマンドを送信する。このプロトコルは実機で未検証(調査ベース、<code>tasks/research/</code>参照)。期待通りに光らない場合は <code>tasks/run.log</code> を確認。',
+    panelLayerIndicator: "レイヤーインジケータ",
+    labelLayerIndicatorEnable: "有効にする",
+    optColorRed: "赤",
+    optColorGreen: "緑",
+    optColorBlue: "青",
+    hintLayerIndicatorHtml: '有効にすると、側面のインジケータLEDが通常レイヤー以外(Layer1/Layer2)が有効な間点灯し、通常レイヤーに戻ると消灯する — 上の「ハイパーシフト」パネルでモーメンタリなら押している間、トグルなら通常レイヤーから切り替わっている間。修飾キーモードでは一切使われない(レイヤーが変化しないため)。上の「ライティング (LED)」パネルのメインキー照明とは別系統のLED(側面の3灯のうち1つ)なので、スペクトラム等のメイン照明を邪魔しない。このプロトコルはOpenRazer自体もTartarus Proでは未実装のため実機で未検証(調査ベース、<code>tasks/research/2026-07-21_tartarus_pro_profile_indicator_led_protocol.md</code>参照)。光らない場合は<code>tasks/run.log</code>の<code>WARNING: failed to send layer indicator ...</code>を確認。',
+    btnSave: "保存",
+    statusSaving: "保存中...",
+    statusSaved: "保存しました。tartarus_driverが動いていれば約1秒以内に自動反映されます。",
+    statusErrorPrefix: "エラー: ",
+    statusNetworkErrorPrefix: "通信エラー: ",
+    calibPromptPressKeys: "キーを押してみてください...",
+    calibTimeoutMsg: "(タイムアウトのため自動停止しました)",
+    unknownKeySuffix: "(未知のキー)",
+  },
+};
+
+let currentLang = 'en';
+let KEY_CATEGORIES = { basic: [], media: [] };
+
+function applyLanguage(lang) {
+  if (!I18N[lang]) lang = 'en';
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.title = I18N[lang].pageTitle;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = I18N[lang][el.dataset.i18n];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = I18N[lang][el.dataset.i18nHtml];
+  });
+  document.getElementById('language-select').value = lang;
+  updateCalibButtonText();
+}
+
+async function setLanguage(lang) {
+  applyLanguage(lang);
+  try {
+    await fetch('/api/language', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ language: lang }),
+    });
+  } catch (e) {
+    // best-effort; the preference just won't persist this time
+  }
+}
+
+// "basic" if currentValue isn't in KEY_CATEGORIES.media — including an
+// unrecognized value, same defensive-fallback spirit as the "unknown key"
+// option below.
+function categoryOf(value) {
+  return KEY_CATEGORIES.media.includes(value) ? 'media' : 'basic';
+}
+
+// Fills a key-value <select> from one category's list, pre-selecting
+// currentValue if given and present. If currentValue is given but absent
+// from the list (either it's genuinely unrecognized, or the user just
+// switched category and the old value doesn't exist in the new one), adds a
+// defensive "(unknown key)" option instead of silently substituting the
+// first entry — same behavior makeSelect had before the category split.
+function fillKeyValueOptions(valSelect, category, currentValue) {
+  valSelect.replaceChildren();
+  const list = KEY_CATEGORIES[category] || [];
+  for (const name of list) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    if (name === currentValue) opt.selected = true;
+    valSelect.appendChild(opt);
+  }
+  if (currentValue != null && !list.includes(currentValue)) {
+    const opt = document.createElement('option');
+    opt.value = currentValue;
+    opt.textContent = currentValue + ' ' + I18N[currentLang].unknownKeySuffix;
+    opt.selected = true;
+    valSelect.appendChild(opt);
+  }
+}
+
+// Two-level key picker (v1.0.5): a small category <select> ("Basic" / "Media
+// Control") next to a value <select> populated from that category's list —
+// #{idPrefix}-cat and #{idPrefix}-val. Choosing a different category
+// repopulates the value select from scratch (defaulting to that category's
+// first entry, since the previous value generally won't exist in the new
+// category's list).
+function makeKeyPicker(idPrefix, currentValue) {
+  const wrap = document.createElement('span');
+  wrap.className = 'key-picker';
+
+  const catSelect = document.createElement('select');
+  catSelect.className = 'key-cat';
+  catSelect.id = idPrefix + '-cat';
+  const catBasic = document.createElement('option');
+  catBasic.value = 'basic';
+  catBasic.dataset.i18n = 'catBasic';
+  catBasic.textContent = I18N[currentLang].catBasic;
+  const catMedia = document.createElement('option');
+  catMedia.value = 'media';
+  catMedia.dataset.i18n = 'catMedia';
+  catMedia.textContent = I18N[currentLang].catMedia;
+  catSelect.append(catBasic, catMedia);
+  catSelect.value = categoryOf(currentValue);
+
+  const valSelect = document.createElement('select');
+  valSelect.className = 'key-val';
+  valSelect.id = idPrefix + '-val';
+  fillKeyValueOptions(valSelect, catSelect.value, currentValue);
+
+  catSelect.addEventListener('change', () => {
+    fillKeyValueOptions(valSelect, catSelect.value, null);
+  });
+
+  wrap.append(catSelect, valSelect);
+  return wrap;
+}
+
+function fillSlot(slotId, idPrefix, value) {
+  const slot = document.getElementById(slotId);
+  slot.replaceChildren(makeKeyPicker(idPrefix, value));
+}
+
+function pickerValue(idPrefix) {
+  return document.getElementById(idPrefix + '-val').value;
+}
+
+async function init() {
+  const [options, config, versionInfo] = await Promise.all([
+    fetch('/api/key-options').then(r => r.json()),
+    fetch('/api/config').then(r => r.json()),
+    fetch('/api/version').then(r => r.json()).catch(() => null),
+  ]);
+  KEY_CATEGORIES = options;
+  applyLanguage(config.language || 'en');
+  if (versionInfo && versionInfo.version) {
+    document.getElementById('version-tag').textContent = 'v' + versionInfo.version;
+  }
+
+  const tbody = document.getElementById('analog-body');
+  const rows = [];
+  for (let i = 0; i < 20; i++) {
+    const label = 'key' + String(i + 1).padStart(2, '0');
+    const tr = document.createElement('tr');
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = label;
+    const tdDefault = document.createElement('td');
+    const tdLayer1 = document.createElement('td');
+    tdLayer1.dataset.layer = '1';
+    const tdLayer2 = document.createElement('td');
+    tdLayer2.dataset.layer = '2';
+    tdDefault.appendChild(makeKeyPicker('analog-default-' + i, config.keys_default[i]));
+    tdLayer1.appendChild(makeKeyPicker('analog-layer1-' + i, config.keys_layer1[i]));
+    tdLayer2.appendChild(makeKeyPicker('analog-layer2-' + i, config.keys_layer2[i]));
+    tr.append(tdLabel, tdDefault, tdLayer1, tdLayer2);
+    rows.push(tr);
+  }
+  tbody.replaceChildren(...rows);
+
+  document.getElementById('hypershift-mode').value = config.hypershift_mode;
+  document.getElementById('hypershift-switch-style').value = config.hypershift_switch_style;
+  document.getElementById('hypershift-layer-count').value = String(config.hypershift_layer_count);
+  fillSlot('slot-hypershift-modifier-key', 'hypershift-modifier-key', config.hypershift_modifier_key);
+  updateHypershiftFieldVisibility();
+
+  fillSlot('slot-dpad-left', 'dpad-left', config.dpad_left);
+  fillSlot('slot-dpad-up', 'dpad-up', config.dpad_up);
+  fillSlot('slot-dpad-right', 'dpad-right', config.dpad_right);
+  fillSlot('slot-dpad-down', 'dpad-down', config.dpad_down);
+  fillSlot('slot-wheel-up', 'wheel-up', config.wheel_up);
+  fillSlot('slot-wheel-down', 'wheel-down', config.wheel_down);
+  fillSlot('slot-middle-click', 'middle-click', config.middle_click);
+
+  document.getElementById('t-on').value = config.t_on;
+  document.getElementById('t-off').value = config.t_off;
+  buildPerKeyActuationTable(config);
+
+  document.getElementById('lighting-effect').value = config.lighting_effect;
+  document.getElementById('lighting-color').value = '#' + config.lighting_color;
+  document.getElementById('lighting-brightness').value = config.lighting_brightness;
+  document.getElementById('lighting-direction').value = config.lighting_wave_direction;
+  document.getElementById('lighting-speed').value = config.lighting_reactive_speed;
+  updateLightingFieldVisibility();
+
+  document.getElementById('layer-indicator-enabled').checked = config.layer_indicator_enabled;
+  document.getElementById('layer-indicator-color').value = config.layer_indicator_color;
+}
+
+function buildPerKeyActuationTable(config) {
+  const tbody = document.getElementById('perkey-body');
+  const rows = [];
+  for (let i = 0; i < 20; i++) {
+    const label = 'key' + String(i + 1).padStart(2, '0');
+    const hasOverride = config.per_key_t_on[i] != null && config.per_key_t_off[i] != null;
+
+    const tr = document.createElement('tr');
+
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = label;
+
+    const tdDepth = document.createElement('td');
+    const barWrap = document.createElement('span');
+    barWrap.className = 'depth-bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'depth-bar';
+    bar.id = 'depth-bar-' + i;
+    barWrap.appendChild(bar);
+    const depthNum = document.createElement('span');
+    depthNum.id = 'depth-num-' + i;
+    depthNum.textContent = '0';
+    tdDepth.append(barWrap, depthNum);
+
+    const tdMax = document.createElement('td');
+    tdMax.id = 'depth-max-' + i;
+    tdMax.textContent = '0';
+
+    const tdEnable = document.createElement('td');
+    const enableCheckbox = document.createElement('input');
+    enableCheckbox.type = 'checkbox';
+    enableCheckbox.id = 'perkey-enable-' + i;
+    enableCheckbox.checked = hasOverride;
+    tdEnable.appendChild(enableCheckbox);
+
+    const tdTon = document.createElement('td');
+    const tonInput = document.createElement('input');
+    tonInput.type = 'number';
+    tonInput.min = 1;
+    tonInput.max = 255;
+    tonInput.id = 'perkey-ton-' + i;
+    tonInput.value = hasOverride ? config.per_key_t_on[i] : config.t_on;
+    tonInput.disabled = !hasOverride;
+    tdTon.appendChild(tonInput);
+
+    const tdToff = document.createElement('td');
+    const toffInput = document.createElement('input');
+    toffInput.type = 'number';
+    toffInput.min = 0;
+    toffInput.max = 254;
+    toffInput.id = 'perkey-toff-' + i;
+    toffInput.value = hasOverride ? config.per_key_t_off[i] : config.t_off;
+    toffInput.disabled = !hasOverride;
+    tdToff.appendChild(toffInput);
+
+    enableCheckbox.addEventListener('change', () => {
+      tonInput.disabled = !enableCheckbox.checked;
+      toffInput.disabled = !enableCheckbox.checked;
+    });
+
+    tr.append(tdLabel, tdDepth, tdMax, tdEnable, tdTon, tdToff);
+    rows.push(tr);
+  }
+  tbody.replaceChildren(...rows);
+}
+
+let calibrationTimer = null;
+const observedMax = new Array(20).fill(0);
+
+function updateCalibButtonText() {
+  const btn = document.getElementById('calib-toggle-btn');
+  btn.textContent = calibrationTimer ? I18N[currentLang].btnCalibStop : I18N[currentLang].btnCalibStart;
+}
+
+async function toggleCalibration() {
+  const status = document.getElementById('calib-status');
+
+  if (calibrationTimer) {
+    clearInterval(calibrationTimer);
+    calibrationTimer = null;
+    updateCalibButtonText();
+    status.textContent = '';
+    try {
+      await fetch('/api/calibration/stop', { method: 'POST' });
+    } catch (e) {
+      // best-effort; the server times out on its own after 10 minutes regardless
+    }
+    return;
+  }
+
+  try {
+    await fetch('/api/calibration/start', { method: 'POST' });
+  } catch (e) {
+    status.textContent = I18N[currentLang].statusNetworkErrorPrefix + e;
+    return;
+  }
+  calibrationTimer = setInterval(pollCalibration, 150);
+  updateCalibButtonText();
+  status.textContent = I18N[currentLang].calibPromptPressKeys;
+}
+
+async function pollCalibration() {
+  try {
+    const res = await fetch('/api/calibration/live');
+    const data = await res.json();
+    if (!data.active) {
+      clearInterval(calibrationTimer);
+      calibrationTimer = null;
+      updateCalibButtonText();
+      document.getElementById('calib-status').textContent = I18N[currentLang].calibTimeoutMsg;
+      return;
+    }
+    for (let i = 0; i < 20 && i < data.depths.length; i++) {
+      const depth = data.depths[i];
+      observedMax[i] = Math.max(observedMax[i], depth);
+      document.getElementById('depth-num-' + i).textContent = depth;
+      document.getElementById('depth-bar-' + i).style.width = (depth / 255 * 100) + '%';
+      document.getElementById('depth-max-' + i).textContent = observedMax[i];
+    }
+  } catch (e) {
+    // transient network hiccup; the next poll retries on its own
+  }
+}
+
+function updateLightingFieldVisibility() {
+  const effect = document.getElementById('lighting-effect').value;
+  const setVisible = (id, visible) => {
+    document.getElementById(id).style.display = visible ? '' : 'none';
+  };
+  setVisible('lighting-color-field', ['static', 'breathing', 'reactive'].includes(effect));
+  setVisible('lighting-brightness-field', effect !== 'none');
+  setVisible('lighting-direction-field', effect === 'wave');
+  setVisible('lighting-speed-field', effect === 'reactive');
+}
+
+function updateHypershiftFieldVisibility() {
+  const mode = document.getElementById('hypershift-mode').value;
+  const style = document.getElementById('hypershift-switch-style').value;
+  const setVisible = (id, visible) => {
+    document.getElementById(id).style.display = visible ? '' : 'none';
+  };
+  setVisible('hypershift-switch-style-field', mode === 'layer_switch');
+  setVisible('hypershift-layer-count-field', mode === 'layer_switch' && style === 'toggle');
+  setVisible('hypershift-modifier-key-field', mode === 'modifier_key');
+  updateLayerColumnAvailability();
+}
+
+// How many of the Analog Keys table's layer columns (Default always counts
+// as 1) are actually reachable given the current Hyper Shift settings:
+// modifier_key mode never switches layers at all (1, Default only);
+// momentary is always exactly 2 (Default/Layer1); toggle reaches
+// layer_count (2 or 3). Columns beyond that count are shown hatched
+// (.layer-col-unreachable) — still editable (config.toml keeps whatever is
+// there either way), just visually marked as not currently in play.
+function reachableLayerCount() {
+  const mode = document.getElementById('hypershift-mode').value;
+  if (mode === 'modifier_key') return 1;
+  const style = document.getElementById('hypershift-switch-style').value;
+  if (style === 'toggle') return Number(document.getElementById('hypershift-layer-count').value);
+  return 2; // momentary
+}
+
+function updateLayerColumnAvailability() {
+  const reachable = reachableLayerCount();
+  for (const layer of [1, 2]) {
+    const unreachable = layer >= reachable;
+    document.querySelectorAll('[data-layer="' + layer + '"]').forEach(el => {
+      el.classList.toggle('layer-col-unreachable', unreachable);
+    });
+  }
+}
+
+function perKeyValues(inputIdPrefix) {
+  const values = [];
+  for (let i = 0; i < 20; i++) {
+    const enabled = document.getElementById('perkey-enable-' + i).checked;
+    values.push(enabled ? Number(document.getElementById(inputIdPrefix + i).value) : null);
+  }
+  return values;
+}
+
+async function save() {
+  const status = document.getElementById('status');
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  status.textContent = I18N[currentLang].statusSaving;
+  status.className = '';
+
+  const keysDefault = [];
+  const keysLayer1 = [];
+  const keysLayer2 = [];
+  for (let i = 0; i < 20; i++) {
+    keysDefault.push(pickerValue('analog-default-' + i));
+    keysLayer1.push(pickerValue('analog-layer1-' + i));
+    keysLayer2.push(pickerValue('analog-layer2-' + i));
+  }
+
+  const payload = {
+    keys_default: keysDefault,
+    keys_layer1: keysLayer1,
+    keys_layer2: keysLayer2,
+    hypershift_mode: document.getElementById('hypershift-mode').value,
+    hypershift_switch_style: document.getElementById('hypershift-switch-style').value,
+    hypershift_layer_count: Number(document.getElementById('hypershift-layer-count').value),
+    hypershift_modifier_key: pickerValue('hypershift-modifier-key'),
+    dpad_left: pickerValue('dpad-left'),
+    dpad_up: pickerValue('dpad-up'),
+    dpad_right: pickerValue('dpad-right'),
+    dpad_down: pickerValue('dpad-down'),
+    wheel_up: pickerValue('wheel-up'),
+    wheel_down: pickerValue('wheel-down'),
+    middle_click: pickerValue('middle-click'),
+    t_on: Number(document.getElementById('t-on').value),
+    t_off: Number(document.getElementById('t-off').value),
+    per_key_t_on: perKeyValues('perkey-ton-'),
+    per_key_t_off: perKeyValues('perkey-toff-'),
+    lighting_effect: document.getElementById('lighting-effect').value,
+    lighting_color: document.getElementById('lighting-color').value.replace('#', '').toUpperCase(),
+    lighting_brightness: Number(document.getElementById('lighting-brightness').value),
+    lighting_wave_direction: document.getElementById('lighting-direction').value,
+    lighting_reactive_speed: Number(document.getElementById('lighting-speed').value),
+    layer_indicator_enabled: document.getElementById('layer-indicator-enabled').checked,
+    layer_indicator_color: document.getElementById('layer-indicator-color').value,
+    language: currentLang,
+  };
+
+  try {
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    if (res.ok && body.ok) {
+      status.textContent = I18N[currentLang].statusSaved;
+      status.className = 'ok';
+    } else {
+      status.textContent = I18N[currentLang].statusErrorPrefix + (body.error || res.status);
+      status.className = 'err';
+    }
+  } catch (e) {
+    status.textContent = I18N[currentLang].statusNetworkErrorPrefix + e;
+    status.className = 'err';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('save-btn').addEventListener('click', save);
+document.getElementById('lighting-effect').addEventListener('change', updateLightingFieldVisibility);
+document.getElementById('hypershift-mode').addEventListener('change', updateHypershiftFieldVisibility);
+document.getElementById('hypershift-switch-style').addEventListener('change', updateHypershiftFieldVisibility);
+document.getElementById('hypershift-layer-count').addEventListener('change', updateLayerColumnAvailability);
+document.getElementById('calib-toggle-btn').addEventListener('click', toggleCalibration);
+document.getElementById('language-select').addEventListener('change', (e) => setLanguage(e.target.value));
+window.addEventListener('beforeunload', () => {
+  if (calibrationTimer) {
+    navigator.sendBeacon('/api/calibration/stop');
+  }
+});
+init();
+</script>
+</body>
+</html>

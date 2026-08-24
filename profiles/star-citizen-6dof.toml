@@ -1,0 +1,53 @@
+# Star Citizen — 6DoF flight (analog strafe + roll)
+# Copy to:  ~/.config/tartarus-linux/config.toml
+# Then restart the driver (or Save from the web UI after paste).
+#
+# Axis map (virtual joystick "Tartarus Pro Analog"):
+#   LY  key08 forward  / key13 back
+#   LX  key12 left     / key14 right
+#   RY  key20 up       / key16 down
+#   RX  key07 roll CCW / key09 roll CW
+#
+# In Star Citizen → Options → Keybindings → Advanced:
+#   bind those axes to Strafe Forward/Back, Left/Right, Up/Down, Roll.
+
+[actuation]
+t_on = 90
+t_off = 70
+t_full = 230
+curve = "expo"
+gamma = 3.0
+
+[thumb]
+up = "UP"
+down = "DOWN"
+left = "LEFT"
+right = "RIGHT"
+button = "F24"
+wheel_up = "VOLUME_UP"
+wheel_down = "VOLUME_DOWN"
+wheel_click = "COMPOSE"
+
+[analog]
+keys = [
+  { mode = "key",  bind = "1" },
+  { mode = "key",  bind = "2" },
+  { mode = "key",  bind = "3" },
+  { mode = "key",  bind = "4" },
+  { mode = "key",  bind = "5" },
+  { mode = "key",  bind = "6" },
+  { mode = "axis", axis = "RX", sign = -1 },   # key07 roll CCW
+  { mode = "axis", axis = "LY", sign =  1 },   # key08 strafe forward
+  { mode = "axis", axis = "RX", sign =  1 },   # key09 roll CW
+  { mode = "key",  bind = "0" },
+  { mode = "key",  bind = "A" },
+  { mode = "axis", axis = "LX", sign = -1 },   # key12 strafe left
+  { mode = "axis", axis = "LY", sign = -1 },   # key13 strafe back
+  { mode = "axis", axis = "LX", sign =  1 },   # key14 strafe right
+  { mode = "key",  bind = "E" },
+  { mode = "axis", axis = "RY", sign = -1 },   # key16 strafe down
+  { mode = "key",  bind = "G" },
+  { mode = "key",  bind = "H" },
+  { mode = "key",  bind = "I" },
+  { mode = "axis", axis = "RY", sign =  1 },   # key20 strafe up
+]

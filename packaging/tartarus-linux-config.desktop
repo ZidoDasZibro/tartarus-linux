@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Tartarus Linux Config
+Comment=Open Tartarus Pro remap web UI in your browser
+Exec=tartarus-linux-ui
+Icon=preferences-desktop-keyboard
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=razer;tartarus;remap;config;
+StartupNotify=true

@@ -1,0 +1,34 @@
+[actuation]
+t_on = 100
+t_off = 80
+
+[thumb]
+up = "UP"
+down = "DOWN"
+left = "LEFT"
+right = "RIGHT"
+button = "SPACE"
+
+[analog]
+keys = [
+  { mode = "key", bind = "1" },
+  { mode = "key", bind = "2" },
+  { mode = "key", bind = "3" },
+  { mode = "key", bind = "4" },
+  { mode = "key", bind = "5" },
+  { mode = "key", bind = "6" },
+  { mode = "key", bind = "7" },
+  { mode = "key", bind = "8" },
+  { mode = "key", bind = "9" },
+  { mode = "key", bind = "0" },
+  { mode = "key", bind = "A" },
+  { mode = "key", bind = "B" },
+  { mode = "key", bind = "C" },
+  { mode = "key", bind = "D" },
+  { mode = "key", bind = "E" },
+  { mode = "axis", axis = "LY", sign = 1 },
+  { mode = "key", bind = "G" },
+  { mode = "key", bind = "H" },
+  { mode = "key", bind = "I" },
+  { mode = "axis", axis = "LY", sign = -1 },
+]
