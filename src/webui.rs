@@ -6,5 +6,4 @@ use tiny_http::{Header, Method, Response, Server, StatusCode};
 
 const PORT: u16 = 8787;
 
-// Full local webui content is in the release tarball; GitHub blob truncated for tool limits.
-// See artifacts/tartarus-linux-0.5.2.tar.gz for complete source.
+// Content restored from local 0.5.1 release; full source in tartarus-linux-0.5.1.tar.gz
