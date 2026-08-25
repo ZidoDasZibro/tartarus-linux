@@ -274,10 +274,15 @@ impl Default for DriverConfig {
 impl DriverConfig {
     pub fn thresholds(&self, layer: usize, i: usize) -> (u8, u8, u8) {
         let k = &self.layers[layer.min(1)][i];
-        let t_on = k.t_on.unwrap_or(self.actuation.t_on);
+        // t_on at least 1 so release can use depth == 0
+        let t_on = k.t_on.unwrap_or(self.actuation.t_on).max(1);
         let mut t_off = k.t_off.unwrap_or(self.actuation.t_off);
+        // Must be strictly below t_on
         if t_off >= t_on {
             t_off = t_on.saturating_sub(20);
+        }
+        if t_off >= t_on {
+            t_off = t_on.saturating_sub(1);
         }
         let mut t_full = k.t_full.unwrap_or(self.actuation.t_full);
         if t_full <= t_on {
@@ -559,8 +564,14 @@ pub fn load_from(path: &Path) -> DriverConfig {
     if let Some(ref name) = raw.actuation.curve {
         c.actuation.curve = Curve::from_name(name, raw.actuation.gamma);
     }
+    if c.actuation.t_on < 1 {
+        c.actuation.t_on = 1;
+    }
     if c.actuation.t_off >= c.actuation.t_on {
         c.actuation.t_off = c.actuation.t_on.saturating_sub(20);
+    }
+    if c.actuation.t_off >= c.actuation.t_on {
+        c.actuation.t_off = c.actuation.t_on.saturating_sub(1);
     }
     let fb0 = keys::default_layer();
     let fb1 = keys::layer1_default();
@@ -623,6 +634,12 @@ pub struct UiKey {
     pub lwin: bool,
     #[serde(default)]
     pub rwin: bool,
+    /// Apply listed modifiers on normal (partial) press
+    #[serde(default)]
+    pub mods_on: bool,
+    /// Apply listed modifiers on full press only
+    #[serde(default)]
+    pub mods_on_full: bool,
 }
 
 fn default_curve_name() -> String {
@@ -670,6 +687,17 @@ pub struct UiPayload {
 }
 
 fn kb_to_ui(k: &KeyBind) -> UiKey {
+    // Surface union of mod flags so UI can show them; booleans say where they apply
+    let m = Mods {
+        lctrl: k.mods.lctrl || k.mods_full.lctrl,
+        rctrl: k.mods.rctrl || k.mods_full.rctrl,
+        lshift: k.mods.lshift || k.mods_full.lshift,
+        rshift: k.mods.rshift || k.mods_full.rshift,
+        lalt: k.mods.lalt || k.mods_full.lalt,
+        ralt: k.mods.ralt || k.mods_full.ralt,
+        lwin: k.mods.lwin || k.mods_full.lwin,
+        rwin: k.mods.rwin || k.mods_full.rwin,
+    };
     match k.bind {
         Bind::Key(code) => UiKey {
             mode: "key".into(),
@@ -682,10 +710,12 @@ fn kb_to_ui(k: &KeyBind) -> UiKey {
             t_full: k.t_full,
             curve: k.curve.map(|c| c.name().into()).unwrap_or_else(|| "".into()),
             gamma: k.curve.map(|c| c.gamma()).unwrap_or(2.0),
-            lctrl: k.mods.lctrl, rctrl: k.mods.rctrl,
-            lshift: k.mods.lshift, rshift: k.mods.rshift,
-            lalt: k.mods.lalt, ralt: k.mods.ralt,
-            lwin: k.mods.lwin, rwin: k.mods.rwin,
+            lctrl: m.lctrl, rctrl: m.rctrl,
+            lshift: m.lshift, rshift: m.rshift,
+            lalt: m.lalt, ralt: m.ralt,
+            lwin: m.lwin, rwin: m.rwin,
+            mods_on: k.mods.any(),
+            mods_on_full: k.mods_full.any(),
         },
         Bind::Axis { axis, sign } => UiKey {
             mode: "axis".into(),
@@ -700,6 +730,7 @@ fn kb_to_ui(k: &KeyBind) -> UiKey {
             gamma: k.curve.map(|c| c.gamma()).unwrap_or(2.0),
             lctrl: false, rctrl: false, lshift: false, rshift: false,
             lalt: false, ralt: false, lwin: false, rwin: false,
+            mods_on: false, mods_on_full: false,
         },
         Bind::None => UiKey {
             mode: "key".into(),
@@ -714,6 +745,7 @@ fn kb_to_ui(k: &KeyBind) -> UiKey {
             gamma: 2.0,
             lctrl: false, rctrl: false, lshift: false, rshift: false,
             lalt: false, ralt: false, lwin: false, rwin: false,
+            mods_on: false, mods_on_full: false,
         },
     }
 }
@@ -738,17 +770,22 @@ fn ui_to_kb(u: &UiKey, fallback: KeyCode) -> KeyBind {
     } else {
         keys::key_from_name(&u.bind_full)
     };
-    let mods = Mods {
+    let listed = Mods {
         lctrl: u.lctrl, rctrl: u.rctrl,
         lshift: u.lshift, rshift: u.rshift,
         lalt: u.lalt, ralt: u.ralt,
         lwin: u.lwin, rwin: u.rwin,
     };
+    // If neither checkbox set but flags present, apply to normal (legacy)
+    let on_normal = u.mods_on || (!u.mods_on_full && listed.any());
+    let on_full = u.mods_on_full;
+    let mods = if on_normal { listed } else { Mods::default() };
+    let mods_full = if on_full { listed } else { Mods::default() };
     KeyBind {
         bind,
         mods,
         bind_full,
-        mods_full: mods,
+        mods_full,
         t_on: u.t_on,
         t_off: u.t_off,
         t_full: u.t_full,

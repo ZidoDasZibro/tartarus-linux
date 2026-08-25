@@ -92,7 +92,14 @@ fn open_analog(api: &HidApi) -> Option<hidapi::HidDevice> {
     None
 }
 
-/// key_down[i] = (partial, optional full)
+/// Held key state: partial chord + optional full chord (with its own mods).
+#[derive(Clone, Copy)]
+struct HeldKey {
+    partial: KeyCode,
+    mods: config::Mods,
+    full: Option<(KeyCode, config::Mods)>,
+}
+
 fn press_chord(pad: &mut VirtualPad, mods: config::Mods, key: KeyCode) {
     for m in mods.codes() {
         let _ = pad.key_down(m);
@@ -101,6 +108,7 @@ fn press_chord(pad: &mut VirtualPad, mods: config::Mods, key: KeyCode) {
 }
 
 fn release_chord(pad: &mut VirtualPad, mods: config::Mods, key: KeyCode) {
+    // Key first, then mods (reverse of press). Always emit up to clear stuck keys.
     let _ = pad.key_up(key);
     for m in mods.codes().into_iter().rev() {
         let _ = pad.key_up(m);
@@ -109,7 +117,7 @@ fn release_chord(pad: &mut VirtualPad, mods: config::Mods, key: KeyCode) {
 
 fn process(
     depths: &[u8; NUM_KEYS],
-    key_down: &mut [Option<(KeyCode, config::Mods, Option<KeyCode>)>; NUM_KEYS],
+    key_down: &mut [Option<HeldKey>; NUM_KEYS],
     axis_last: &mut [i32; 32],
     pad: &mut VirtualPad,
 ) {
@@ -126,50 +134,79 @@ fn process(
         match kb.bind {
             Bind::Key(code) => {
                 if key_down[i].is_none() && depth > t_on {
+                    // Partial press: only kb.mods (not mods_full)
                     press_chord(pad, kb.mods, code);
                     let mut full = None;
                     if let Some(bf) = kb.bind_full {
                         if depth > t_full {
-                            press_chord(pad, kb.mods_full, bf);
-                            full = Some(bf);
+                            // Same key as partial: only add extra mods, don't re-press key
+                            if bf == code {
+                                for m in kb.mods_full.codes() {
+                                    let _ = pad.key_down(m);
+                                }
+                            } else {
+                                press_chord(pad, kb.mods_full, bf);
+                            }
+                            full = Some((bf, kb.mods_full));
                         }
                     }
-                    key_down[i] = Some((code, kb.mods, full));
+                    key_down[i] = Some(HeldKey {
+                        partial: code,
+                        mods: kb.mods,
+                        full,
+                    });
                     println!("key{:02} DOWN depth={depth} L{layer}", i + 1);
                 } else if key_down[i].is_some() {
-                    if let Some((partial, mods, full)) = key_down[i] {
-                        if full.is_none() {
+                    // Escalate to full without releasing partial
+                    if let Some(held) = key_down[i] {
+                        if held.full.is_none() {
                             if let Some(bf) = kb.bind_full {
                                 if depth > t_full {
-                                    press_chord(pad, kb.mods_full, bf);
-                                    key_down[i] = Some((partial, mods, Some(bf)));
+                                    if bf == held.partial {
+                                        for m in kb.mods_full.codes() {
+                                            let _ = pad.key_down(m);
+                                        }
+                                    } else {
+                                        press_chord(pad, kb.mods_full, bf);
+                                    }
+                                    key_down[i] = Some(HeldKey {
+                                        partial: held.partial,
+                                        mods: held.mods,
+                                        full: Some((bf, kb.mods_full)),
+                                    });
                                     println!("key{:02} FULL depth={depth}", i + 1);
                                 }
                             }
                         }
                     }
-                    if depth < t_off {
-                        if let Some((p, mods, f)) = key_down[i].take() {
-                            if let Some(f) = f {
-                                release_chord(pad, kb.mods_full, f);
+                    if depth <= t_off {
+                        if let Some(held) = key_down[i].take() {
+                            if let Some((fk, fm)) = held.full {
+                                if fk == held.partial {
+                                    // release extra full mods only, then partial chord once
+                                    for m in fm.codes().into_iter().rev() {
+                                        let _ = pad.key_up(m);
+                                    }
+                                } else {
+                                    release_chord(pad, fm, fk);
+                                }
                             }
-                            release_chord(pad, mods, p);
+                            release_chord(pad, held.mods, held.partial);
                             println!("key{:02} UP depth={depth}", i + 1);
                         }
                     }
                 }
             }
             Bind::Axis { axis, sign } => {
-                let v = depth_to_axis(axis, sign, depth, curve);
+                // Always accumulate so idle keys zero their contribution
+                let v = if depth > 5 {
+                    depth_to_axis(axis, sign, depth, curve)
+                } else {
+                    0
+                };
                 let code = axis.code() as usize;
                 if code < 64 {
                     axis_acc[code] += v;
-                }
-                if (i == 15 || i == 19) && depth > 20 {
-                    eprintln!(
-                        "[dbg] key{:02} L{} depth={} {} sign={} curve={} val={}",
-                        i + 1, layer, depth, axis.name(), sign, curve.name(), v
-                    );
                 }
             }
             Bind::None => {}
@@ -195,26 +232,35 @@ fn process(
         if idx < axis_last.len() && axis_last[idx] != v {
             axis_last[idx] = v;
             pairs.push((code, v));
-            if v.abs() > 50 {
-                eprintln!("[axis] code={code} val={v}");
-            }
         }
     }
-    if let Err(e) = pad.emit_axes(&pairs) {
-        eprintln!("[axis] emit_axes err={e}");
+    // Always emit all six when any change — keeps Z/RZ from sticking
+    if !pairs.is_empty() {
+        // Include current values for all axes so nothing is left at -32767
+        let all = [
+            (config::ABS_X, axis_last[config::ABS_X as usize]),
+            (config::ABS_Y, axis_last[config::ABS_Y as usize]),
+            (config::ABS_RX, axis_last[config::ABS_RX as usize]),
+            (config::ABS_RY, axis_last[config::ABS_RY as usize]),
+            (config::ABS_Z, axis_last[config::ABS_Z as usize]),
+            (config::ABS_RZ, axis_last[config::ABS_RZ as usize]),
+        ];
+        if let Err(e) = pad.emit_axes(&all) {
+            eprintln!("[axis] emit_axes err={e}");
+        }
     }
 }
 
 fn force_release(
-    key_down: &mut [Option<(KeyCode, config::Mods, Option<KeyCode>)>; NUM_KEYS],
+    key_down: &mut [Option<HeldKey>; NUM_KEYS],
     pad: &mut VirtualPad,
 ) {
     for slot in key_down.iter_mut() {
-        if let Some((p, mods, f)) = slot.take() {
-            if let Some(f) = f {
-                release_chord(pad, config::Mods::default(), f);
+        if let Some(held) = slot.take() {
+            if let Some((fk, fm)) = held.full {
+                release_chord(pad, fm, fk);
             }
-            release_chord(pad, mods, p);
+            release_chord(pad, held.mods, held.partial);
         }
     }
 }
@@ -278,7 +324,7 @@ fn run_driver() -> Result<(), Box<dyn std::error::Error>> {
     println!("driver running — layer {}", state::layer());
     println!("web UI: http://127.0.0.1:8787/");
 
-    let mut key_down: [Option<(KeyCode, config::Mods, Option<KeyCode>)>; NUM_KEYS] = [None; NUM_KEYS];
+    let mut key_down: [Option<HeldKey>; NUM_KEYS] = [None; NUM_KEYS];
     let mut axis_last = [0i32; 32];
     let mut buf = [0u8; 64];
     let mut config_mtime = std::fs::metadata(config::config_path())

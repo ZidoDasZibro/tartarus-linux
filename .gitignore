@@ -5,7 +5,3 @@
 *.swp
 *~
 .DS_Store
-*.tar.gz
-*.tgz
-*.zip
-/tartarus-linux-0.5.0/
